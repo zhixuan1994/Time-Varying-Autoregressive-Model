@@ -3,7 +3,6 @@ import numpy.linalg as LA
 import pandas as pd
 from typing import Union, List
 from scipy.optimize import minimize, NonlinearConstraint
-from tqdm import tqdm
 
 class TV_VAR_GAM:
     def __init__(self, lag_r: int, series: Union[List, np.ndarray, pd.Series], 
@@ -89,16 +88,13 @@ class TV_VAR_GAM:
         return np.array(pred_res)
     
     def GAM_main(self, predict_step):
-        GAM_pred_all = []
         t_h = self.t_list[1] - self.t_list[0]
-        for r in range(1, self.lag_r):
-            GAM_r = []
-            for i in range(self.series_data.shape[1]):
-                GAM_r.append(self.TV_VAR_GAM_one_index(i))
-            GAM_pred = self.GAM_predict(GAM_r, self.series_data[-self.lag_r:], self.t_list[-self.lag_r:], 
-                                        t_h, predict_step)
-            GAM_pred_all.append(GAM_pred)
-        return GAM_pred_all
+        GAM_r = []
+        for i in range(self.series_data.shape[1]):
+            GAM_r.append(self.TV_VAR_GAM_one_index(i))
+        GAM_pred = self.GAM_predict(GAM_r, self.series_data[-self.lag_r:], self.t_list[-self.lag_r:], 
+                                    t_h, predict_step)
+        return GAM_pred
     
 class TV_VAR_OKS:
     def __init__(self, lag_r: int, series: Union[List, np.ndarray, pd.Series], 
@@ -169,14 +165,11 @@ class TV_VAR_OKS:
         return Y_pred_res
     
     def OKS_main(self, predict_step):
-        OKS_pred_all = []
-        for r in range(1,self.lag_r):
-            OKS_r = []
-            for i in tqdm(range(self.series_data.shape[1])):
-                OKS_r.append(self.one_side_KS_CV_main(len(self.t_list), i))
-            OKS_pred = self.one_side_KS_predict(self.series_data[-self.lag_r:], OKS_r, predict_step)
-            OKS_pred_all.append(OKS_pred)
-        return np.array(OKS_pred_all)
+        OKS_r = []
+        for i in range(self.series_data.shape[1]):
+            OKS_r.append(self.one_side_KS_CV_main(len(self.t_list), i))
+        OKS_pred = self.one_side_KS_predict(self.series_data[-self.lag_r:], OKS_r, predict_step)
+        return np.array(OKS_pred)
 
 class TV_VAR_trad:
     def __init__(self, lag_r: int, series: Union[List, np.ndarray, pd.Series], 
@@ -210,7 +203,5 @@ class TV_VAR_trad:
         return np.array(preds)
     
     def VAR_main(self, predict_step):
-        VAR_pred_all = []
         VAR_intercept, VAR_A_list = self.estimate_var_coefficients()
-        VAR_pred_all.append(self.forecast_var_p(VAR_A_list, VAR_intercept, predict_step))
-        return VAR_pred_all
+        return self.forecast_var_p(VAR_A_list, VAR_intercept, predict_step)
